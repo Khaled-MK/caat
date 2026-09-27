@@ -50,7 +50,6 @@ async function loadQuestions(): Promise<void> {
   <td>${escapeHtml(q.option_c)}</td>
   <td><span class="badge badge-success">${correctText}</span></td>
   <td class="action-cells">
-    <button class="btn-sm btn-edit" onclick="editQuestion(${q.id})" title="Modifier">✏️</button>
     <button class="btn-sm btn-delete" onclick="deleteQuestion(${q.id})" title="Supprimer">🗑️</button>
   </td>
 `;
@@ -108,33 +107,6 @@ function initFormEvents(): void {
    btnCancel.addEventListener("click", () => {
       resetForm();
    });
-}
-
-/**
- * Charge les données d'une question dans le formulaire pour modification
- */
-async function editQuestion(id: number): Promise<void> {
-   try {
-      const res = await fetch(`/api/questions/${id}`);
-      if (!res.ok) return;
-
-      const q: Question = await res.json();
-
-      (document.getElementById("input-id") as HTMLInputElement).value = q.id.toString();
-      (document.getElementById("input-question") as HTMLTextAreaElement).value = q.question;
-      (document.getElementById("input-opt-a") as HTMLInputElement).value = q.option_a;
-      (document.getElementById("input-opt-b") as HTMLInputElement).value = q.option_b;
-      (document.getElementById("input-opt-c") as HTMLInputElement).value = q.option_c;
-      (document.getElementById("select-correct") as HTMLSelectElement).value = q.correct_index.toString();
-
-      document.getElementById("form-title")!.textContent = `Modifier la Question #${q.id}`;
-      document.getElementById("btn-save")!.textContent = "Mettre à jour";
-      document.getElementById("btn-cancel")!.classList.remove("hidden");
-
-      window.scrollTo({ top: 0, behavior: "smooth" });
-   } catch (err) {
-      console.error(err);
-   }
 }
 
 /**

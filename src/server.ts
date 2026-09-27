@@ -64,8 +64,9 @@ function initDatabase() {
    const countStmt = db.prepare("SELECT COUNT(*) as total FROM questions");
    const result = countStmt.get() as { total: number };
 
-   // const parti = db.prepare("SELECT * FROM participants ");
-   // const result2 = parti.get();
+   const parti = db.prepare("SELECT * FROM participants ");
+   const result2 = parti.all() as Array<{ id: number; prenom: string; telephone: string; score: number; total: number; est_gagnant: number; code_validation: string | null; reponses_json: string | null; date_horodatage: string }>;
+   console.log("result2 : ", result2);
 
    // console.log("Participants : ", result2);
 
@@ -81,6 +82,16 @@ function initDatabase() {
          ["Qu'est-ce que la livraison du « Dernier Kilomètre » ?", "Le trajet entre deux entrepôts régionaux", "L'étape finale d'acheminement du colis jusqu'au destinataire", "La livraison effectuée uniquement à pied", 1],
          ["Quel est l'objectif principal de l'A/B Testing en marketing digital ?", "Tester la vitesse du serveur web", "Comparer deux versions d'une page pour mesurer la meilleure conversion", "Payer ses publicités deux fois moins cher", 1],
          ["Quel est le principe fondamental du modèle « Dropshipping » ?", "Le vendeur stocke la marchandise dans son magasin", "Le client fabrique lui-même son produit", "Le vendeur vend sans stock et le fournisseur expédie directement", 2],
+         ["Qu'est-ce que le « Taux de Conversion » sur un site e-commerce ?", "Le pourcentage de visiteurs qui réalisent un achat", "Le coût total de conception du site web", "Le nombre de personnes qui visitent le site chaque mois", 0],
+         ["Dans le domaine des startups, qu'est-ce que le « Pitch » ?", "La signature d'un contrat avec la banque", "Une présentation courte et percutante pour convaincre des investisseurs", "La baisse brutale du chiffre d'affaires", 1],
+         ["Que désigne l'acronyme « SEO » en marketing digital ?", "Système d'Échange d'Options", "Service d'Expédition Ordinaire", "L'optimisation pour les moteurs de recherche (référencement naturel)", 2],
+         ["Qu'appelle-t-on l'abandon de panier ?", "Lorsqu'un client ajoute des articles à son panier mais quitte le site sans acheter", "Lorsqu'un livreur perd le colis d'un client", "Un produit retiré définitivement du catalogue", 0],
+         ["Que signifie le terme « Growth Hacking » ?", "Le piratage informatique des serveurs concurrents", "L'utilisation de techniques rapides et innovantes pour faire croître une entreprise", "Le recrutement massif de nouveaux développeurs", 1],
+         ["Qu'est-ce que le « Click and Collect » ?", "Acheter en ligne et aller retirer son produit directement en magasin", "Cliquer plusieurs fois sur une pub pour obtenir une réduction", "Payer son produit en cash lors de la livraison à domicile", 0],
+         ["Dans le e-commerce, que signifie l'indicateur « CAC » ?", "Chiffre d'Affaires Cumulé", "Coût d'Acquisition Client", "Calcul Automatique du Panier", 1],
+         ["Qu'est-ce qu'un modèle économique d'« Abonnement » (SaaS) ?", "Le paiement d'un montant récurrent pour accéder régulièrement à un service", "Un achat unique avec livraison gratuite à vie", "Un prêt bancaire à taux zéro pour financer un achat", 0],
+         ["En logistique, qu'est-ce que le « Cross-docking » ?", "La livraison internationale par bateau à conteneurs", "Le passage direct des marchandises du quai d'arrivée au quai de départ sans stockage", "Le retour des produits défectueux à l'usine", 1],
+         ["Que désigne le « Churn Rate » (ou taux d'attrition) pour un service e-commerce ?", "Le nombre de nouveaux abonnés chaque mois", "La vitesse de chargement des images sur le site", "Le pourcentage de clients perdus ou désabonnés sur une période donnée", 2],
       ];
 
       const insertMany = db.transaction((questions) => {

@@ -168,10 +168,6 @@ body.admin-body {
    font-weight: 500;
 }
 
-.btn-edit {
-   background: #0284c7;
-   color: #ffffff;
-}
 .btn-delete {
    background: #dc2626;
    color: #ffffff;
@@ -223,6 +219,7 @@ body.admin-body {
 
 .action-cells {
    display: flex;
+   justify-content: center;
    gap: 8px;
    white-space: nowrap;
 }
@@ -234,6 +231,7 @@ body.admin-body {
    align-items: center;
    justify-content: center;
    border-radius: 6px;
+   min-width: 42px;
 }
 
 .badge-success {
