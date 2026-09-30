@@ -56,7 +56,8 @@ function initDatabase() {
       option_a TEXT NOT NULL,
       option_b TEXT NOT NULL,
       option_c TEXT NOT NULL,
-      correct_index INTEGER NOT NULL
+      correct_index INTEGER NOT NULL,
+      language INTEGER NOT NULL DEFAULT 0
     );
 
       CREATE TABLE IF NOT EXISTS settings (
@@ -64,6 +65,20 @@ function initDatabase() {
          value TEXT NOT NULL
       );
   `);
+
+   const questionColumns = db.prepare("PRAGMA table_info(questions)").all() as Array<{ name: string }>;
+   if (!questionColumns.some((column) => column.name === "language")) {
+      db.exec("ALTER TABLE questions ADD COLUMN language INTEGER NOT NULL DEFAULT 0");
+
+      const existingQuestions = db.prepare("SELECT id, question FROM questions").all() as Array<{ id: number; question: string }>;
+      const updateLanguage = db.prepare("UPDATE questions SET language = ? WHERE id = ?");
+      const migrateLanguages = db.transaction(() => {
+         for (const question of existingQuestions) {
+            updateLanguage.run(/[\u0600-\u06FF]/.test(question.question) ? 0 : 1, question.id);
+         }
+      });
+      migrateLanguages();
+   }
 
    db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)").run("time_per_question", "8");
 
@@ -79,42 +94,42 @@ function initDatabase() {
 
    if (result.total === 0) {
       const insertStmt = db.prepare(`
-      INSERT INTO questions (question, option_a, option_b, option_c, correct_index) 
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO questions (question, option_a, option_b, option_c, correct_index, language)
+      VALUES (?, ?, ?, ?, ?,?)
     `);
 
       const defaultQuestions = [
-         ["في مجال التجارة الإلكترونية، ماذا يُقصد بـ «متوسط السلة» (Panier Moyen)؟", "متوسط المبلغ الذي ينفقه الزبون في الطلبية الواحدة", "عدد المنتجات المضافة التي لم يتم شراؤها", "متوسط تكلفة توصيل الطرد", 0],
-         ["ماذا يعني الاختصار «MVP» بالنسبة للشركات الناشئة؟", "الشخص الأكثر قيمة (Most Valuable Person)", "المنتج الأدنى القابل للنمو (Minimum Viable Product)", "عميلة الحجم الأقصى (Maximum Volume Process)", 1],
-         ["ما المقصود بتوصيل «الميل الأخير» (Dernier Kilomètre)؟", "المسافة بين مستودعين إقليميين", "المرحلة النهائية لنقل الطرد حتى تسليمه للمستلم", "التوصيل الذي يتم مشياً على الأقدام فقط", 1],
-         ["ما هو الهدف الرئيسي من اختبار «A/B Testing» في التسويق الرقمي؟", "اختبار سرعة خادم الويب", "مقارنة نسختين من صفحة لقياس الأفضل في معدل التحويل", "دفع نصف سعر الإعلانات", 1],
-         ["ما هو المبسط الأساسي لنموذج «الدروب شيبينج» (Dropshipping)؟", "يخزن البائع البضاعة في متجره", "يقوم الزبون بتصنيع منتجه بنفسه", "يبيع البائع بدون مخزون ويقوم المورد بالتحشين مباشرة", 2],
-         ["ما هو «معدل التحويل» (Taux de Conversion) في موقع التجارة الإلكترونية؟", "نسبة الزوار الذين يقومون بعملية شراء", "التكلفة الإجمالية لتصميم موقع الويب", "عدد الأشخاص الذين يزورون الموقع شهرياً", 0],
-         ["في مجال الشركات الناشئة، ما هو «العرض الترويجي» (Pitch)؟", "توقيع عقد مع البنك", "عرض التقديمي قصير ومؤثر لإقناع المستثمرين", "الإنخفاض الحاد في رقم الأعمال", 1],
-         ["إلى ماذا يشير الاختصار «SEO» في التسويق الرقمي؟", "نظام تبادل الخيارات", "خدمة الشحن العادي", "تحسين محركات البحث (الظهور الطبيعي)", 2],
-         ["ماذا يسمى «تخلي عن السلة» (Abandon de panier)؟", "عندما يضيف الزبون منتجات لسلتها ثم يغادر الموقع دون شراء", "عندما يفقد عامل التوصيل طرد الزبون", "منتج تم سحبه نهائياً من الكتالوج", 0],
+         ["في مجال التجارة الإلكترونية، ماذا يُقصد بـ «متوسط السلة» (Panier Moyen)؟", "متوسط المبلغ الذي ينفقه الزبون في الطلبية الواحدة", "عدد المنتجات المضافة التي لم يتم شراؤها", "متوسط تكلفة توصيل الطرد", 0, 0],
+         ["ماذا يعني الاختصار «MVP» بالنسبة للشركات الناشئة؟", "الشخص الأكثر قيمة (Most Valuable Person)", "المنتج الأدنى القابل للنمو (Minimum Viable Product)", "عميلة الحجم الأقصى (Maximum Volume Process)", 1, 0],
+         ["ما المقصود بتوصيل «الميل الأخير» (Dernier Kilomètre)؟", "المسافة بين مستودعين إقليميين", "المرحلة النهائية لنقل الطرد حتى تسليمه للمستلم", "التوصيل الذي يتم مشياً على الأقدام فقط", 1, 0],
+         ["ما هو الهدف الرئيسي من اختبار «A/B Testing» في التسويق الرقمي؟", "اختبار سرعة خادم الويب", "مقارنة نسختين من صفحة لقياس الأفضل في معدل التحويل", "دفع نصف سعر الإعلانات", 1, 0],
+         ["ما هو المبسط الأساسي لنموذج «الدروب شيبينج» (Dropshipping)؟", "يخزن البائع البضاعة في متجره", "يقوم الزبون بتصنيع منتجه بنفسه", "يبيع البائع بدون مخزون ويقوم المورد بالتحشين مباشرة", 2, 0],
+         ["ما هو «معدل التحويل» (Taux de Conversion) في موقع التجارة الإلكترونية؟", "نسبة الزوار الذين يقومون بعملية شراء", "التكلفة الإجمالية لتصميم موقع الويب", "عدد الأشخاص الذين يزورون الموقع شهرياً", 0, 0],
+         ["في مجال الشركات الناشئة، ما هو «العرض الترويجي» (Pitch)؟", "توقيع عقد مع البنك", "عرض التقديمي قصير ومؤثر لإقناع المستثمرين", "الإنخفاض الحاد في رقم الأعمال", 1, 0],
+         ["إلى ماذا يشير الاختصار «SEO» في التسويق الرقمي؟", "نظام تبادل الخيارات", "خدمة الشحن العادي", "تحسين محركات البحث (الظهور الطبيعي)", 2, 0],
+         ["ماذا يسمى «تخلي عن السلة» (Abandon de panier)؟", "عندما يضيف الزبون منتجات لسلتها ثم يغادر الموقع دون شراء", "عندما يفقد عامل التوصيل طرد الزبون", "منتج تم سحبه نهائياً من الكتالوج", 0, 0],
          ["ماذا يعني مصطلح «نمو الهدم» (Growth Hacking)؟", "اختراق خوادم المنافسين الإلكترونية", "استخدام تقنيات سريعة ومبتكرة لتحقيق نمو سريع للشركة", "التوظيف المكثف للمطورين الجدد", 1],
-         ["ما هو مفهوم «اضغط واستلم» (Click and Collect)؟", "الشراء عبر الإنترنت واستلام المنتج مباشرة من المتجر", "النقر عدة مرات على إعلان للحصول على تخفيض", "دفع ثمن المنتج نقداً عند التسليم في المنزل", 0],
-         ["في التجارة الإلكترونية، ماذا يعني المؤشر «CAC»؟", "رقم الأعمال التراكمي", "تكلفة الاستحواذ على الزبون (Coût d'Acquisition Client)", "الحساب التلقائي للسلة", 1],
-         ["ما هو نموذج العمل القائم على «الاشتراك» (SaaS)؟", "دفع مبلغ دوري للوصول المنتظم إلى خدمة", "شراء لمرة واحدة مع توصيل مجاني مدى الحياة", "قرض بنكي بفائدة صفر لتمويل الشراء", 0],
-         ["في اللوجستيات، ما هو «التلافي» (Cross-docking)؟", "التوصيل الدولي عبر سفن الحاويات", "النقل المباشر للبضائع من رصيف الوصول إلى رصيف المغادرة دون تخزين", "إعادة المنتجات المعيبة إلى المصنع", 1],
-         ["إلام يشير «معدل التخلي/إلغاء الاشتراك» (Churn Rate) في التجارة الإلكترونية؟", "عدد المشتركين الجدد كل شهر", "سرعة تحميل الصور على الموقع", "نسبة الزبائن المفقودين أو ملغي الاشتراك خلال فترة معينة", 2],
+         ["ما هو مفهوم «اضغط واستلم» (Click and Collect)؟", "الشراء عبر الإنترنت واستلام المنتج مباشرة من المتجر", "النقر عدة مرات على إعلان للحصول على تخفيض", "دفع ثمن المنتج نقداً عند التسليم في المنزل", 0, 0],
+         ["في التجارة الإلكترونية، ماذا يعني المؤشر «CAC»؟", "رقم الأعمال التراكمي", "تكلفة الاستحواذ على الزبون (Coût d'Acquisition Client)", "الحساب التلقائي للسلة", 1, 0],
+         ["ما هو نموذج العمل القائم على «الاشتراك» (SaaS)؟", "دفع مبلغ دوري للوصول المنتظم إلى خدمة", "شراء لمرة واحدة مع توصيل مجاني مدى الحياة", "قرض بنكي بفائدة صفر لتمويل الشراء", 0, 0],
+         ["في اللوجستيات، ما هو «التلافي» (Cross-docking)؟", "التوصيل الدولي عبر سفن الحاويات", "النقل المباشر للبضائع من رصيف الوصول إلى رصيف المغادرة دون تخزين", "إعادة المنتجات المعيبة إلى المصنع", 1, 0],
+         ["إلام يشير «معدل التخلي/إلغاء الاشتراك» (Churn Rate) في التجارة الإلكترونية؟", "عدد المشتركين الجدد كل شهر", "سرعة تحميل الصور على الموقع", "نسبة الزبائن المفقودين أو ملغي الاشتراك خلال فترة معينة", 2, 0],
 
-         ["Dans le domaine du e-commerce, qu'appelle-t-on le « Panier Moyen » ?", "Le montant moyen dépensé par un client lors d'une commande", "Le nombre d'articles ajoutés mais non achetés", "Le coût moyen de livraison d'un colis", 0],
-         ["Que signifie l'acronyme « MVP » pour une startup ?", "Most Valuable Person", "Minimum Viable Product", "Maximum Volume Process", 1],
-         ["Qu'est-ce que la livraison du « Dernier Kilomètre » ?", "Le trajet entre deux entrepôts régionaux", "L'étape finale d'acheminement du colis jusqu'au destinataire", "La livraison effectuée uniquement à pied", 1],
-         ["Quel est l'objectif principal de l'A/B Testing en marketing digital ?", "Tester la vitesse du serveur web", "Comparer deux versions d'une page pour mesurer la meilleure conversion", "Payer ses publicités deux fois moins cher", 1],
-         ["Quel est le principe fondamental du modèle « Dropshipping » ?", "Le vendeur stocke la marchandise dans son magasin", "Le client fabrique lui-même son produit", "Le vendeur vend sans stock et le fournisseur expédie directement", 2],
-         ["Qu'est-ce que le « Taux de Conversion » sur un site e-commerce ?", "Le pourcentage de visiteurs qui réalisent un achat", "Le coût total de conception du site web", "Le nombre de personnes qui visitent le site chaque mois", 0],
-         ["Dans le domaine des startups, qu'est-ce que le « Pitch » ?", "La signature d'un contrat avec la banque", "Une présentation courte et percutante pour convaincre des investisseurs", "La baisse brutale du chiffre d'affaires", 1],
-         ["Que désigne l'acronyme « SEO » en marketing digital ?", "Système d'Échange d'Options", "Service d'Expédition Ordinaire", "L'optimisation pour les moteurs de recherche (référencement naturel)", 2],
-         ["Qu'appelle-t-on l'abandon de panier ?", "Lorsqu'un client ajoute des articles à son panier mais quitte le site sans acheter", "Lorsqu'un livreur perd le colis d'un client", "Un produit retiré définitivement du catalogue", 0],
-         ["Que signifie le terme « Growth Hacking » ?", "Le piratage informatique des serveurs concurrents", "L'utilisation de techniques rapides et innovantes pour faire croître une entreprise", "Le recrutement massif de nouveaux développeurs", 1],
-         ["Qu'est-ce que le « Click and Collect » ?", "Acheter en ligne et aller retirer son produit directement en magasin", "Cliquer plusieurs fois sur une pub pour obtenir une réduction", "Payer son produit en cash lors de la livraison à domicile", 0],
-         ["Dans le e-commerce, que signifie l'indicateur « CAC » ?", "Chiffre d'Affaires Cumulé", "Coût d'Acquisition Client", "Calcul Automatique du Panier", 1],
-         ["Qu'est-ce qu'un modèle économique d'« Abonnement » (SaaS) ?", "Le paiement d'un montant récurrent pour accéder régulièrement à un service", "Un achat unique avec livraison gratuite à vie", "Un prêt bancaire à taux zéro pour financer un achat", 0],
-         ["En logistique, qu'est-ce que le « Cross-docking » ?", "La livraison internationale par bateau à conteneurs", "Le passage direct des marchandises du quai d'arrivée au quai de départ sans stockage", "Le retour des produits défectueux à l'usine", 1],
-         ["Que désigne le « Churn Rate » (ou taux d'attrition) pour un service e-commerce ?", "Le nombre de nouveaux abonnés chaque mois", "La vitesse de chargement des images sur le site", "Le pourcentage de clients perdus ou désabonnés sur une période donnée", 2],
+         ["Dans le domaine du e-commerce, qu'appelle-t-on le « Panier Moyen » ?", "Le montant moyen dépensé par un client lors d'une commande", "Le nombre d'articles ajoutés mais non achetés", "Le coût moyen de livraison d'un colis", 0, 1],
+         ["Que signifie l'acronyme « MVP » pour une startup ?", "Most Valuable Person", "Minimum Viable Product", "Maximum Volume Process", 1, 1],
+         ["Qu'est-ce que la livraison du « Dernier Kilomètre » ?", "Le trajet entre deux entrepôts régionaux", "L'étape finale d'acheminement du colis jusqu'au destinataire", "La livraison effectuée uniquement à pied", 1, 1],
+         ["Quel est l'objectif principal de l'A/B Testing en marketing digital ?", "Tester la vitesse du serveur web", "Comparer deux versions d'une page pour mesurer la meilleure conversion", "Payer ses publicités deux fois moins cher", 1, 1],
+         ["Quel est le principe fondamental du modèle « Dropshipping » ?", "Le vendeur stocke la marchandise dans son magasin", "Le client fabrique lui-même son produit", "Le vendeur vend sans stock et le fournisseur expédie directement", 2, 1],
+         ["Qu'est-ce que le « Taux de Conversion » sur un site e-commerce ?", "Le pourcentage de visiteurs qui réalisent un achat", "Le coût total de conception du site web", "Le nombre de personnes qui visitent le site chaque mois", 0, 1],
+         ["Dans le domaine des startups, qu'est-ce que le « Pitch » ?", "La signature d'un contrat avec la banque", "Une présentation courte et percutante pour convaincre des investisseurs", "La baisse brutale du chiffre d'affaires", 1, 1],
+         ["Que désigne l'acronyme « SEO » en marketing digital ?", "Système d'Échange d'Options", "Service d'Expédition Ordinaire", "L'optimisation pour les moteurs de recherche (référencement naturel)", 2, 1],
+         ["Qu'appelle-t-on l'abandon de panier ?", "Lorsqu'un client ajoute des articles à son panier mais quitte le site sans acheter", "Lorsqu'un livreur perd le colis d'un client", "Un produit retiré définitivement du catalogue", 0, 1],
+         ["Que signifie le terme « Growth Hacking » ?", "Le piratage informatique des serveurs concurrents", "L'utilisation de techniques rapides et innovantes pour faire croître une entreprise", "Le recrutement massif de nouveaux développeurs", 1, 1],
+         ["Qu'est-ce que le « Click and Collect » ?", "Acheter en ligne et aller retirer son produit directement en magasin", "Cliquer plusieurs fois sur une pub pour obtenir une réduction", "Payer son produit en cash lors de la livraison à domicile", 0, 1],
+         ["Dans le e-commerce, que signifie l'indicateur « CAC » ?", "Chiffre d'Affaires Cumulé", "Coût d'Acquisition Client", "Calcul Automatique du Panier", 1, 1],
+         ["Qu'est-ce qu'un modèle économique d'« Abonnement » (SaaS) ?", "Le paiement d'un montant récurrent pour accéder régulièrement à un service", "Un achat unique avec livraison gratuite à vie", "Un prêt bancaire à taux zéro pour financer un achat", 0, 1],
+         ["En logistique, qu'est-ce que le « Cross-docking » ?", "La livraison internationale par bateau à conteneurs", "Le passage direct des marchandises du quai d'arrivée au quai de départ sans stockage", "Le retour des produits défectueux à l'usine", 1, 1],
+         ["Que désigne le « Churn Rate » (ou taux d'attrition) pour un service e-commerce ?", "Le nombre de nouveaux abonnés chaque mois", "La vitesse de chargement des images sur le site", "Le pourcentage de clients perdus ou désabonnés sur une période donnée", 2, 1],
       ];
 
       const insertMany = db.transaction((questions) => {
@@ -149,9 +164,13 @@ app.get("/quizPage", (req, res) => {
 });
 
 app.get("/api/questions", async (req, res) => {
-   const stmt = db.prepare("SELECT * FROM questions");
-   console.log("questions trouvées :", stmt);
-   res.json(stmt.all());
+   const language = req.query.language;
+   if (language !== undefined && language !== "0" && language !== "1") {
+      return res.status(400).json({ error: "La langue doit être 0 (arabe) ou 1 (français)." });
+   }
+
+   const stmt = language === undefined ? db.prepare("SELECT * FROM questions") : db.prepare("SELECT * FROM questions WHERE language = ?");
+   res.json(language === undefined ? stmt.all() : stmt.all(Number(language)));
 });
 
 app.get("/api/settings/time-per-question", (req, res) => {

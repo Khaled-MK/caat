@@ -8,6 +8,7 @@ interface Question {
    option_b: string;
    option_c: string;
    correct_index: number;
+   language: 0 | 1;
 }
 
 function translateQuestionMessage(message: string): string {

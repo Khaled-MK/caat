@@ -12,7 +12,8 @@
    "type": "commonjs",
    "dependencies": {
       "better-sqlite3": "^13.0.3",
-      "express": "^5.2.1"
+      "express": "^5.2.1",
+      "node-windows": "^1.0.0-beta.8"
    },
    "devDependencies": {
       "@types/better-sqlite3": "^9.6.0",

@@ -9,6 +9,7 @@ interface Question {
    option_c: string;
    answers: string[]; // Fallback si le serveur renvoie un tableau d'options
    correct_index: number;
+   language: 0 | 1;
 }
 
 // Configuration du Quiz
@@ -40,7 +41,8 @@ function shuffleArray<T>(array: T[]): T[] {
  */
 async function fetchQuestions(): Promise<Question[]> {
    try {
-      const response = await fetch("/api/questions");
+      const language = document.documentElement.lang === "ar" ? 0 : 1;
+      const response = await fetch(`/api/questions?language=${language}`);
       if (!response.ok) {
          throw new Error(`Erreur HTTP: ${response.status}`);
       }
@@ -66,12 +68,23 @@ async function initQuiz(): Promise<void> {
       return;
    }
 
+   const language = document.documentElement.lang === "ar" ? 0 : 1;
+   const matchingQuestions = allQuestions.filter((question) => question.language === language);
+   if (matchingQuestions.length === 0) {
+      const container = document.getElementById("quiz-container");
+      if (container) {
+         container.innerHTML = '<p class="text-center">Impossible de charger les questions.</p>';
+      }
+      return;
+   }
+
    // Sélection aléatoire de 5 questions
-   const shuffled = shuffleArray(allQuestions);
+   const shuffled = shuffleArray(matchingQuestions);
    selectedQuestions = shuffled.slice(0, CONFIG.QUESTIONS_LIMIT);
 
    currentQuestionIndex = 0;
    userScore = 0;
+   userAnswersHistory = [];
 
    renderQuestion();
 }
@@ -258,5 +271,9 @@ function finishQuiz(): void {
 
 // Initialisation au chargement du DOM
 document.addEventListener("DOMContentLoaded", () => {
+   initQuiz();
+});
+
+document.addEventListener("app-language-changed", () => {
    initQuiz();
 });

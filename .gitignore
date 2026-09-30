@@ -1,1 +1,5 @@
 node_modules
+désinstall service.txt
+install-service.js
+uninstall-service.js
+daemon/

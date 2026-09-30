@@ -52,7 +52,8 @@ function shuffleArray(array) {
 function fetchQuestions() {
    return __awaiter(this, void 0, void 0, function* () {
       try {
-         const response = yield fetch("/api/questions");
+         const language = document.documentElement.lang === "ar" ? 0 : 1;
+         const response = yield fetch(`/api/questions?language=${language}`);
          if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
          }
@@ -74,10 +75,20 @@ function initQuiz() {
          }
          return;
       }
-      const shuffled = shuffleArray(allQuestions);
+      const language = document.documentElement.lang === "ar" ? 0 : 1;
+      const matchingQuestions = allQuestions.filter((question) => question.language === language);
+      if (matchingQuestions.length === 0) {
+         const container = document.getElementById("quiz-container");
+         if (container) {
+            container.innerHTML = '<p class="text-center">Impossible de charger les questions.</p>';
+         }
+         return;
+      }
+      const shuffled = shuffleArray(matchingQuestions);
       selectedQuestions = shuffled.slice(0, CONFIG.QUESTIONS_LIMIT);
       currentQuestionIndex = 0;
       userScore = 0;
+      userAnswersHistory = [];
       renderQuestion();
    });
 }
@@ -207,5 +218,8 @@ function finishQuiz() {
    window.location.href = "result.html";
 }
 document.addEventListener("DOMContentLoaded", () => {
+   initQuiz();
+});
+document.addEventListener("app-language-changed", () => {
    initQuiz();
 });
