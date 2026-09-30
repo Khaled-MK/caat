@@ -7,8 +7,10 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
       <title>CAAT Sprint Quiz — ECSEL ALGER 2026</title>
       <link rel="stylesheet" href="css/styles.css" />
+      <link rel="stylesheet" href="css/i18n.css" />
    </head>
    <body>
+      <button id="language-switch" class="language-switch" type="button" aria-label="Passer en arabe">AR</button>
       <div id="trigger" class="trigger"></div>
       <main class="app-container">
          <!-- ==================== ÉCRAN 1 : ACCUEIL / STANDBY ==================== -->
@@ -31,7 +33,7 @@
                      <span class="card-txt">Questions</span>
                   </div>
                   <div class="info-card">
-                     <span class="card-num">8s</span>
+                     <span id="time-per-question-display" class="card-num">8s</span>
                      <span class="card-txt">Par question</span>
                   </div>
                   <div class="info-card">
@@ -46,6 +48,7 @@
             </div>
          </section>
       </main>
+      <script src="./js/i18n.js"></script>
       <script src="./js/main.js"></script>
    </body>
 </html>

@@ -1,0 +1,45 @@
+/** @format */
+
+.language-switch {
+   position: fixed;
+   z-index: 10000;
+   top: 14px;
+   left: 14px;
+   width: 48px;
+   height: 48px;
+   padding: 0;
+   border: 1px solid rgba(255, 255, 255, 0.35);
+   border-radius: 50%;
+   background: #ffffff;
+   color: #17212b;
+   font: inherit;
+   font-weight: 700;
+   cursor: pointer;
+}
+
+.language-switch:hover {
+   background: #e9f2f4;
+}
+
+.language-switch:focus-visible {
+   outline: 3px solid #f0bd45;
+   outline-offset: 2px;
+}
+
+html[dir="rtl"] .language-switch {
+   right: 14px;
+   left: auto;
+}
+
+html[dir="rtl"] .answer-btn,
+html[dir="rtl"] .form-group,
+html[dir="rtl"] .admin-lock-panel form,
+html[dir="rtl"] .admin-table {
+   text-align: right;
+}
+
+html[dir="rtl"] .question-text {
+   padding-right: 0;
+   padding-left: 2rem;
+   text-align: right;
+}

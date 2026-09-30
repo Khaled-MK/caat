@@ -42,6 +42,10 @@ interface AdminDashboardStats {
 
 const ADMIN_PIN = "1234";
 
+function translateAdminMessage(message: string): string {
+   return (window as Window & { AppI18n?: { translate: (value: string) => string } }).AppI18n?.translate(message) ?? message;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
    const pinInput = document.getElementById("admin-pin") as HTMLInputElement;
    const pinError = document.getElementById("admin-pin-error") as HTMLElement;
@@ -105,7 +109,7 @@ async function fetchDashboardStats(): Promise<void> {
       renderParticipantsTable(stats.participants);
    } catch (error) {
       console.error("Erreur Admin Stats:", error);
-      alert("Impossible de charger les statistiques d'administration.");
+      alert(translateAdminMessage("Impossible de charger les statistiques d'administration."));
    }
 }
 
@@ -134,7 +138,7 @@ function renderTopQuestions(topQuestions: TopQuestion[]): void {
          (q, idx) => `
          <div class="question-card">
             <span class="question-rank">#${idx + 1}</span>
-            <div class="question-text">${q.question}</div>
+            <div class="question-text" data-no-translate>${q.question}</div>
             <div class="progress-bar-bg">
                <div class="progress-bar-fill" style="width: ${q.successRate.toFixed(1)}%;"></div>
             </div>
@@ -206,7 +210,7 @@ function renderParticipantsTable(participants: ParticipantEntry[]): void {
       const playedAt = new Date(`${participant.dateHorodatage.replace(" ", "T")}Z`);
       const formattedDate = Number.isNaN(playedAt.getTime())
          ? participant.dateHorodatage
-         : new Intl.DateTimeFormat("fr-FR", {
+         : new Intl.DateTimeFormat(document.documentElement.lang === "ar" ? "ar-DZ" : "fr-FR", {
               year: "numeric",
               month: "2-digit",
               day: "2-digit",

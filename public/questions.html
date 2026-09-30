@@ -7,6 +7,7 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>CAAT Sprint Quiz — Administration des Questions</title>
       <link rel="stylesheet" href="css/question.css" />
+      <link rel="stylesheet" href="css/i18n.css" />
    </head>
    <body class="admin-body">
       <div class="admin-container">
@@ -14,6 +15,18 @@
             <h1>Gestion des Questions BDD</h1>
             <a href="index.html" class="btn btn-secondary">Retour à l'accueil</a>
          </header>
+
+         <section class="card-panel timer-settings-panel">
+            <h2>Chrono des questions</h2>
+            <form id="timer-settings-form" class="timer-settings-form">
+               <div class="form-group">
+                  <label for="time-per-question">Durée par question (secondes)</label>
+                  <input id="time-per-question" type="number" min="1" max="120" step="1" value="8" required />
+               </div>
+               <button type="submit" id="btn-save-timer" class="btn btn-primary">Enregistrer le chrono</button>
+               <p id="timer-settings-status" role="status" aria-live="polite"></p>
+            </form>
+         </section>
 
          <!-- Formulaire d'ajout / modification -->
          <section class="card-panel admin-form-panel">
@@ -83,6 +96,7 @@
             </table>
          </section>
       </div>
+      <script src="./js/i18n.js"></script>
       <script src="./js/questions.js" defer></script>
    </body>
 </html>

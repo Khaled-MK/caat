@@ -84,6 +84,7 @@ body.admin-body {
 
 /* Normalisation identique pour tous les inputs, textarea et select */
 .form-group input[type="text"],
+.form-group input[type="number"],
 .form-group textarea,
 .form-group select {
    width: 100%;
@@ -107,6 +108,7 @@ body.admin-body {
 }
 
 .form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
 .form-group textarea:focus,
 .form-group select:focus {
    border-color: #3b82f6;
@@ -126,6 +128,23 @@ body.admin-body {
    display: flex;
    gap: 12px;
    margin-top: 10px;
+}
+
+.timer-settings-form {
+   display: flex;
+   align-items: flex-end;
+   gap: 16px;
+   flex-wrap: wrap;
+}
+
+.timer-settings-form .form-group {
+   max-width: 260px;
+   margin-bottom: 0;
+}
+
+#timer-settings-status {
+   min-height: 24px;
+   color: #86efac;
 }
 
 /* 7. Boutons */
@@ -275,6 +294,15 @@ body.admin-body {
 
    .form-actions .btn {
       width: 100%;
+   }
+
+   .timer-settings-form {
+      align-items: stretch;
+      flex-direction: column;
+   }
+
+   .timer-settings-form .form-group {
+      max-width: none;
    }
 }
 

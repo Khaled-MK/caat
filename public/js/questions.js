@@ -1,6 +1,10 @@
 /** @format */
 
 "use strict";
+function translateQuestionMessage(message) {
+   var _a;
+   return (_a = window.AppI18n === null || window.AppI18n === void 0 ? void 0 : window.AppI18n.translate(message)) !== null && _a !== void 0 ? _a : message;
+}
 var __awaiter =
    (this && this.__awaiter) ||
    function (thisArg, _arguments, P, generator) {
@@ -35,7 +39,45 @@ var __awaiter =
 document.addEventListener("DOMContentLoaded", () => {
    loadQuestions();
    initFormEvents();
+   loadTimerSetting();
+   initTimerForm();
 });
+function loadTimerSetting() {
+   return __awaiter(this, void 0, void 0, function* () {
+      const input = document.getElementById("time-per-question");
+      try {
+         const response = yield fetch("/api/settings/time-per-question");
+         if (!response.ok) throw new Error("Erreur de chargement du chrono");
+         const setting = yield response.json();
+         input.value = setting.seconds.toString();
+      } catch (err) {
+         console.error(err);
+      }
+   });
+}
+function initTimerForm() {
+   const form = document.getElementById("timer-settings-form");
+   const input = document.getElementById("time-per-question");
+   const status = document.getElementById("timer-settings-status");
+   form.addEventListener("submit", (event) =>
+      __awaiter(this, void 0, void 0, function* () {
+         event.preventDefault();
+         status.textContent = "";
+         try {
+            const response = yield fetch("/api/settings/time-per-question", {
+               method: "PUT",
+               headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ seconds: input.valueAsNumber }),
+            });
+            if (!response.ok) throw new Error("Erreur lors de l'enregistrement du chrono");
+            status.textContent = "Chrono enregistré.";
+         } catch (err) {
+            console.error(err);
+            status.textContent = "Impossible d'enregistrer le chrono.";
+         }
+      }),
+   );
+}
 function loadQuestions() {
    return __awaiter(this, void 0, void 0, function* () {
       const tbody = document.getElementById("questions-table-body");
@@ -57,10 +99,10 @@ function loadQuestions() {
             const correctText = optLabels[q.correct_index] || "Inconnu";
             tr.innerHTML = `
     <td>${q.id}</td>
-  <td><strong>${escapeHtml(q.question)}</strong></td>
-  <td>${escapeHtml(q.option_a)}</td>
-  <td>${escapeHtml(q.option_b)}</td>
-  <td>${escapeHtml(q.option_c)}</td>
+   <td data-no-translate><strong>${escapeHtml(q.question)}</strong></td>
+   <td data-no-translate>${escapeHtml(q.option_a)}</td>
+   <td data-no-translate>${escapeHtml(q.option_b)}</td>
+   <td data-no-translate>${escapeHtml(q.option_c)}</td>
   <td><span class="badge badge-success">${correctText}</span></td>
   <td class="action-cells">
     <button class="btn-sm btn-delete" onclick="deleteQuestion(${q.id})" title="Supprimer">🗑️</button>
@@ -101,11 +143,11 @@ function initFormEvents() {
                resetForm();
                loadQuestions();
             } else {
-               alert("Erreur lors de l'enregistrement.");
+               alert(translateQuestionMessage("Erreur lors de l'enregistrement."));
             }
          } catch (err) {
             console.error(err);
-            alert("Erreur réseau.");
+            alert(translateQuestionMessage("Erreur réseau."));
          }
       }),
    );
@@ -115,14 +157,14 @@ function initFormEvents() {
 }
 function deleteQuestion(id) {
    return __awaiter(this, void 0, void 0, function* () {
-      if (!confirm(`Voulez-vous vraiment supprimer la question #${id} ?`)) return;
+      if (!confirm(translateQuestionMessage(`Voulez-vous vraiment supprimer la question #${id} ?`))) return;
       try {
          const res = yield fetch(`/api/questions/${id}`, { method: "DELETE" });
          if (res.ok) {
             resetForm();
             loadQuestions();
          } else {
-            alert("Impossible de supprimer la question.");
+            alert(translateQuestionMessage("Impossible de supprimer la question."));
          }
       } catch (err) {
          console.error(err);

@@ -58,15 +58,22 @@ function initDatabase() {
       option_c TEXT NOT NULL,
       correct_index INTEGER NOT NULL
     );
+
+      CREATE TABLE IF NOT EXISTS settings (
+         key TEXT PRIMARY KEY,
+         value TEXT NOT NULL
+      );
   `);
+
+   db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)").run("time_per_question", "8");
 
    // Vérification et population initiale
    const countStmt = db.prepare("SELECT COUNT(*) as total FROM questions");
    const result = countStmt.get() as { total: number };
 
-   const parti = db.prepare("SELECT * FROM participants ");
-   const result2 = parti.all() as Array<{ id: number; prenom: string; telephone: string; score: number; total: number; est_gagnant: number; code_validation: string | null; reponses_json: string | null; date_horodatage: string }>;
-   console.log("result2 : ", result2);
+   // const parti = db.prepare("SELECT * FROM questions ");
+   // const result2 = parti.all();
+   // console.log("result2 : ", result2);
 
    // console.log("Participants : ", result2);
 
@@ -77,6 +84,22 @@ function initDatabase() {
     `);
 
       const defaultQuestions = [
+         ["في مجال التجارة الإلكترونية، ماذا يُقصد بـ «متوسط السلة» (Panier Moyen)؟", "متوسط المبلغ الذي ينفقه الزبون في الطلبية الواحدة", "عدد المنتجات المضافة التي لم يتم شراؤها", "متوسط تكلفة توصيل الطرد", 0],
+         ["ماذا يعني الاختصار «MVP» بالنسبة للشركات الناشئة؟", "الشخص الأكثر قيمة (Most Valuable Person)", "المنتج الأدنى القابل للنمو (Minimum Viable Product)", "عميلة الحجم الأقصى (Maximum Volume Process)", 1],
+         ["ما المقصود بتوصيل «الميل الأخير» (Dernier Kilomètre)؟", "المسافة بين مستودعين إقليميين", "المرحلة النهائية لنقل الطرد حتى تسليمه للمستلم", "التوصيل الذي يتم مشياً على الأقدام فقط", 1],
+         ["ما هو الهدف الرئيسي من اختبار «A/B Testing» في التسويق الرقمي؟", "اختبار سرعة خادم الويب", "مقارنة نسختين من صفحة لقياس الأفضل في معدل التحويل", "دفع نصف سعر الإعلانات", 1],
+         ["ما هو المبسط الأساسي لنموذج «الدروب شيبينج» (Dropshipping)؟", "يخزن البائع البضاعة في متجره", "يقوم الزبون بتصنيع منتجه بنفسه", "يبيع البائع بدون مخزون ويقوم المورد بالتحشين مباشرة", 2],
+         ["ما هو «معدل التحويل» (Taux de Conversion) في موقع التجارة الإلكترونية؟", "نسبة الزوار الذين يقومون بعملية شراء", "التكلفة الإجمالية لتصميم موقع الويب", "عدد الأشخاص الذين يزورون الموقع شهرياً", 0],
+         ["في مجال الشركات الناشئة، ما هو «العرض الترويجي» (Pitch)؟", "توقيع عقد مع البنك", "عرض التقديمي قصير ومؤثر لإقناع المستثمرين", "الإنخفاض الحاد في رقم الأعمال", 1],
+         ["إلى ماذا يشير الاختصار «SEO» في التسويق الرقمي؟", "نظام تبادل الخيارات", "خدمة الشحن العادي", "تحسين محركات البحث (الظهور الطبيعي)", 2],
+         ["ماذا يسمى «تخلي عن السلة» (Abandon de panier)؟", "عندما يضيف الزبون منتجات لسلتها ثم يغادر الموقع دون شراء", "عندما يفقد عامل التوصيل طرد الزبون", "منتج تم سحبه نهائياً من الكتالوج", 0],
+         ["ماذا يعني مصطلح «نمو الهدم» (Growth Hacking)؟", "اختراق خوادم المنافسين الإلكترونية", "استخدام تقنيات سريعة ومبتكرة لتحقيق نمو سريع للشركة", "التوظيف المكثف للمطورين الجدد", 1],
+         ["ما هو مفهوم «اضغط واستلم» (Click and Collect)؟", "الشراء عبر الإنترنت واستلام المنتج مباشرة من المتجر", "النقر عدة مرات على إعلان للحصول على تخفيض", "دفع ثمن المنتج نقداً عند التسليم في المنزل", 0],
+         ["في التجارة الإلكترونية، ماذا يعني المؤشر «CAC»؟", "رقم الأعمال التراكمي", "تكلفة الاستحواذ على الزبون (Coût d'Acquisition Client)", "الحساب التلقائي للسلة", 1],
+         ["ما هو نموذج العمل القائم على «الاشتراك» (SaaS)؟", "دفع مبلغ دوري للوصول المنتظم إلى خدمة", "شراء لمرة واحدة مع توصيل مجاني مدى الحياة", "قرض بنكي بفائدة صفر لتمويل الشراء", 0],
+         ["في اللوجستيات، ما هو «التلافي» (Cross-docking)؟", "التوصيل الدولي عبر سفن الحاويات", "النقل المباشر للبضائع من رصيف الوصول إلى رصيف المغادرة دون تخزين", "إعادة المنتجات المعيبة إلى المصنع", 1],
+         ["إلام يشير «معدل التخلي/إلغاء الاشتراك» (Churn Rate) في التجارة الإلكترونية؟", "عدد المشتركين الجدد كل شهر", "سرعة تحميل الصور على الموقع", "نسبة الزبائن المفقودين أو ملغي الاشتراك خلال فترة معينة", 2],
+
          ["Dans le domaine du e-commerce, qu'appelle-t-on le « Panier Moyen » ?", "Le montant moyen dépensé par un client lors d'une commande", "Le nombre d'articles ajoutés mais non achetés", "Le coût moyen de livraison d'un colis", 0],
          ["Que signifie l'acronyme « MVP » pour une startup ?", "Most Valuable Person", "Minimum Viable Product", "Maximum Volume Process", 1],
          ["Qu'est-ce que la livraison du « Dernier Kilomètre » ?", "Le trajet entre deux entrepôts régionaux", "L'étape finale d'acheminement du colis jusqu'au destinataire", "La livraison effectuée uniquement à pied", 1],
@@ -129,6 +152,21 @@ app.get("/api/questions", async (req, res) => {
    const stmt = db.prepare("SELECT * FROM questions");
    console.log("questions trouvées :", stmt);
    res.json(stmt.all());
+});
+
+app.get("/api/settings/time-per-question", (req, res) => {
+   const setting = db.prepare("SELECT value FROM settings WHERE key = ?").get("time_per_question") as { value: string };
+   res.json({ seconds: Number(setting.value) });
+});
+
+app.put("/api/settings/time-per-question", (req, res) => {
+   const { seconds } = req.body as { seconds: number };
+   if (!Number.isInteger(seconds) || seconds < 1 || seconds > 120) {
+      return res.status(400).json({ error: "La durée doit être un nombre entier entre 1 et 120 secondes." });
+   }
+
+   db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run("time_per_question", seconds.toString());
+   return res.json({ success: true, seconds });
 });
 
 // Ajouter un participant

@@ -10,10 +10,54 @@ interface Question {
    correct_index: number;
 }
 
+function translateQuestionMessage(message: string): string {
+   return (window as Window & { AppI18n?: { translate: (value: string) => string } }).AppI18n?.translate(message) ?? message;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
    loadQuestions();
    initFormEvents();
+   loadTimerSetting();
+   initTimerForm();
 });
+
+async function loadTimerSetting(): Promise<void> {
+   const input = document.getElementById("time-per-question") as HTMLInputElement;
+
+   try {
+      const response = await fetch("/api/settings/time-per-question");
+      if (!response.ok) throw new Error("Erreur de chargement du chrono");
+      const setting = await response.json();
+      input.value = setting.seconds.toString();
+   } catch (err) {
+      console.error(err);
+   }
+}
+
+function initTimerForm(): void {
+   const form = document.getElementById("timer-settings-form") as HTMLFormElement;
+   const input = document.getElementById("time-per-question") as HTMLInputElement;
+   const status = document.getElementById("timer-settings-status") as HTMLElement;
+
+   form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      status.textContent = "";
+
+      try {
+         const response = await fetch("/api/settings/time-per-question", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ seconds: input.valueAsNumber }),
+         });
+
+         if (!response.ok) throw new Error("Erreur lors de l'enregistrement du chrono");
+         status.textContent = "Chrono enregistré.";
+      } catch (err) {
+         console.error(err);
+         status.textContent = "Impossible d'enregistrer le chrono.";
+      }
+   });
+}
 
 /**
  * Récupère et affiche la liste des questions depuis l'API Express
@@ -44,10 +88,10 @@ async function loadQuestions(): Promise<void> {
 
          tr.innerHTML = `
     <td>${q.id}</td>
-  <td><strong>${escapeHtml(q.question)}</strong></td>
-  <td>${escapeHtml(q.option_a)}</td>
-  <td>${escapeHtml(q.option_b)}</td>
-  <td>${escapeHtml(q.option_c)}</td>
+   <td data-no-translate><strong>${escapeHtml(q.question)}</strong></td>
+   <td data-no-translate>${escapeHtml(q.option_a)}</td>
+   <td data-no-translate>${escapeHtml(q.option_b)}</td>
+   <td data-no-translate>${escapeHtml(q.option_c)}</td>
   <td><span class="badge badge-success">${correctText}</span></td>
   <td class="action-cells">
     <button class="btn-sm btn-delete" onclick="deleteQuestion(${q.id})" title="Supprimer">🗑️</button>
@@ -96,11 +140,11 @@ function initFormEvents(): void {
             resetForm();
             loadQuestions();
          } else {
-            alert("Erreur lors de l'enregistrement.");
+            alert(translateQuestionMessage("Erreur lors de l'enregistrement."));
          }
       } catch (err) {
          console.error(err);
-         alert("Erreur réseau.");
+         alert(translateQuestionMessage("Erreur réseau."));
       }
    });
 
@@ -113,7 +157,7 @@ function initFormEvents(): void {
  * Supprime une question
  */
 async function deleteQuestion(id: number): Promise<void> {
-   if (!confirm(`Voulez-vous vraiment supprimer la question #${id} ?`)) return;
+   if (!confirm(translateQuestionMessage(`Voulez-vous vraiment supprimer la question #${id} ?`))) return;
 
    try {
       const res = await fetch(`/api/questions/${id}`, { method: "DELETE" });
@@ -121,7 +165,7 @@ async function deleteQuestion(id: number): Promise<void> {
          resetForm();
          loadQuestions();
       } else {
-         alert("Impossible de supprimer la question.");
+         alert(translateQuestionMessage("Impossible de supprimer la question."));
       }
    } catch (err) {
       console.error(err);

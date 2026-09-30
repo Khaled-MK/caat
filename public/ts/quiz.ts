@@ -56,7 +56,7 @@ async function fetchQuestions(): Promise<Question[]> {
  * Initialise le quiz au chargement
  */
 async function initQuiz(): Promise<void> {
-   const allQuestions = await fetchQuestions();
+   const [allQuestions] = await Promise.all([fetchQuestions(), loadQuizTimerSetting()]);
 
    if (!allQuestions || allQuestions.length === 0) {
       const container = document.getElementById("quiz-container");
@@ -74,6 +74,19 @@ async function initQuiz(): Promise<void> {
    userScore = 0;
 
    renderQuestion();
+}
+
+async function loadQuizTimerSetting(): Promise<void> {
+   try {
+      const response = await fetch("/api/settings/time-per-question");
+      if (!response.ok) throw new Error("Erreur de chargement du chrono");
+      const setting = await response.json();
+      if (Number.isInteger(setting.seconds) && setting.seconds >= 1 && setting.seconds <= 120) {
+         CONFIG.TIME_PER_QUESTION = setting.seconds;
+      }
+   } catch (error) {
+      console.error("Utilisation du chrono par défaut:", error);
+   }
 }
 
 /**
@@ -94,7 +107,10 @@ function renderQuestion(): void {
 
    if (qNumElem) qNumElem.textContent = (currentQuestionIndex + 1).toString();
    if (qTotalElem) qTotalElem.textContent = selectedQuestions.length.toString();
-   if (qTextElem) qTextElem.textContent = q.question;
+   if (qTextElem) {
+      qTextElem.dataset.noTranslate = "true";
+      qTextElem.textContent = q.question;
+   }
 
    // Extraire les 3 options (compatible format BDD 'option_a' ou tableau 'answers')
    let optionsList: string[] = [];
@@ -112,7 +128,9 @@ function renderQuestion(): void {
          const btn = document.createElement("button");
          btn.type = "button";
          btn.className = "answer-btn";
-         btn.textContent = `${String.fromCharCode(65 + idx)}. ${textOption}`; // A. Text, B. Text...
+         btn.dataset.noTranslate = "true";
+         const optionLabel = document.documentElement.lang === "ar" ? ["أ", "ب", "ج"][idx] : String.fromCharCode(65 + idx);
+         btn.textContent = `${optionLabel}. ${textOption}`;
          btn.addEventListener("click", () => handleAnswer(idx, btn));
          optionsContainer.appendChild(btn);
       });
@@ -123,14 +141,14 @@ function renderQuestion(): void {
 }
 
 /**
- * Gère le compte à rebours de 8 secondes
+ * Gère le compte à rebours de la durée configurée
  */
 function startTimer(): void {
    const timerBar = document.getElementById("timer-bar");
    const timerText = document.getElementById("timer-text");
 
    if (timerBar) timerBar.style.width = "100%";
-   if (timerText) timerText.textContent = `0${CONFIG.TIME_PER_QUESTION}s`;
+   if (timerText) timerText.textContent = `${CONFIG.TIME_PER_QUESTION < 10 ? "0" : ""}${CONFIG.TIME_PER_QUESTION}s`;
 
    const intervalTime = 100; // Mise à jour toutes les 100ms pour la fluidité
    const totalSteps = (CONFIG.TIME_PER_QUESTION * 1000) / intervalTime;
@@ -146,7 +164,7 @@ function startTimer(): void {
 
       const remainingSec = Math.ceil(CONFIG.TIME_PER_QUESTION - (step * intervalTime) / 1000);
       if (timerText) {
-         timerText.textContent = `0${Math.max(0, remainingSec)}s`;
+         timerText.textContent = `${remainingSec < 10 ? "0" : ""}${Math.max(0, remainingSec)}s`;
       }
 
       // Temps écoulé
